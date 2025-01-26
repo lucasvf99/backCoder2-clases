@@ -33,13 +33,13 @@ import sessionRouter from './routes/sessions.routes.js'
 // import FileStore from 'session-file-store' 
 //importamos connect-mongo
 import MongoStore from 'connect-mongo'
-import handlebars from 'express-handlebars'
+import {create} from 'express-handlebars'
 
  
 
 const app = express()
 const PORT = 8080
-// const hds = create()
+const hbs = create()
 
 //hacer antes de empezar
 // const fileStore = new FileStore(session)
@@ -82,11 +82,13 @@ mongoose.connect("mongodb+srv://lucasvf4379:FwKkhXrPcqUrKIoR@cluster0.qqzul.mong
 .catch((e) => console.log("Error al conectar db", e))
 
 //handlebars            
-app.engine('handlebars', handlebars.engine())
-app.set('views', path.join(__dirname, 'views'))//concateno evitando errores de / o     
+app.engine('handlebars', hbs.engine)
 app.set('view engine', 'handlebars')
+app.set('views', path.join(__dirname, '/views'))//concateno evitando errores de / o     
 
+console.log('Directorio base:', __dirname);
 console.log('Directorio de vistas configurado:', path.join(__dirname, 'views'));
+
 
 //midleware Rutas
 app.use('/public', express.static(__dirname + '/public'))//concatenar rutas 
@@ -95,66 +97,4 @@ app.use('/api/session', sessionRouter)
 app.listen(PORT, ()=>{
         console.log(`Servidor corriendo en el puerto ${PORT}`);
 })      
-
-//funcion de autenticacion     
-//next => continuar con la siguiente ejecucion
-function auth (req,res,next) {
-        if(req.session.email == "lucas@.com" ){
-                return next // continuco con la ejecucion
-        }else{
-                return res.status(401).send('Error al auntenticar usuario ')//error de autenticacion 401 
-        }
-}
-
-//Creo sesion
-app.get('/session', (req,res)=> {
-        //si existe, ya ingrese previamente, solo aumenta el contador
-        if(req.session.counter){
-                req.session.counter ++
-                res.status(200).send(`Ingresaste un total de ${req.session.counter} veces`)
-        }  else {
-                req.session.counter = 1
-                res.status(200).send('Bienvenido')
-        }     
-})
-
-
-//Eliminar una sesion
-app.get('/logout', (req,res)=> {
-       //elimina todas las sesiones
-        req.session.destroy((e)=>{ //callbak, maneja el error
-                if(e){
-                        res.status(500).send(e)
-                }else{
-                        res.status(200).send('Logout')
-                }
-        })
-})
-
-
-
-
-//login
-
-app.get('/login', (req,res)=> {
-        const  {email, pasword} = req.body
-
-        if(email == "lucas@.com" & pasword== 1234){
-                req.session.email =email
-                req.session.admin = true
-                res.status(200).send('Usuario logeado')
-        }else{
-                res.status(404).send('Usuario o contraseña incorrectos')
-        }
-
-        
-})
-                //middleware a nivel de endpoint
-app.get('/private', auth, (req,res)=>{
-        res.status(200).send('Contenido de lucas@.com')
-})
-
-
-
-
 
